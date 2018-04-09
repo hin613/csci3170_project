@@ -27,49 +27,22 @@ public class CSCI3170Proj {
 		NEASQL += "Distance DOUBLE NOT NULL,";
 		NEASQL += "Family VARCHAR(6) NOT NULL,";
         NEASQL += "Duration INT(3) NOT NULL,";
-        NEASQL += "Energy DOUBLE NOT NULL)";
-
-		String manufacturerSQL = "CREATE TABLE manufacturer (";
-		manufacturerSQL += "m_id INT PRIMARY KEY NOT NULL,";
-		manufacturerSQL += "m_name VARCHAR(20) NOT NULL,";
-		manufacturerSQL += "m_addr VARCHAR(50) NOT NULL,";
-		manufacturerSQL += "m_phone INT NOT NULL,";
-		manufacturerSQL += "CHECK (m_id BETWEEN 1 AND 99),";
-		manufacturerSQL += "CHECK (m_phone BETWEEN 10000000 AND 99999999))";
-
-		String salespersonSQL = "CREATE TABLE salesperson (";
-		salespersonSQL += "s_id INT PRIMARY KEY NOT NULL,";
-		salespersonSQL += "s_name VARCHAR(20) NOT NULL,";
-		salespersonSQL += "s_addr VARCHAR(50) NOT NULL,";
-		salespersonSQL += "s_phone INT NOT NULL,";
-		salespersonSQL += "s_experience INT NOT NULL,";
-		salespersonSQL += "CHECK (s_id BETWEEN 1 AND 99),";
-		salespersonSQL += "CHECK (s_phone BETWEEN 10000000 AND 99999999),";
-		salespersonSQL += "CHECK (s_experience BETWEEN 1 AND 9))";
-
-		String partSQL = "CREATE TABLE part (";
-		partSQL += "p_id INT PRIMARY KEY NOT NULL,";
-		partSQL += "p_name VARCHAR(20) NOT NULL,";
-		partSQL += "p_price INT NOT NULL,";
-		partSQL += "m_id INT NOT NULL,";
-		partSQL += "c_id INT NOT NULL,";
-		partSQL += "p_quantity INT NOT NULL,";
-		partSQL += "p_warranty INT NOT NULL,";
-		partSQL += "FOREIGN KEY (m_id) REFERENCES manufacturer(m_id),";
-		partSQL += "FOREIGN KEY (c_id) REFERENCES category(c_id),";
-		partSQL += "CHECK (p_id BETWEEN 1 AND 999),";
-		partSQL += "CHECK (p_price BETWEEN 1 AND 99999),";
-		partSQL += "CHECK (p_warranty BETWEEN 1 AND 99),";
-		partSQL += "CHECK (p_quantity BETWEEN 0 AND 99))";
-
-		String transactionSQL = "CREATE TABLE transaction (";
-		transactionSQL += "t_id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,";
-		transactionSQL += "p_id INT NOT NULL,";
-		transactionSQL += "s_id INT NOT NULL,";
-		transactionSQL += "t_date DATE NOT NULL,";
-		transactionSQL += "FOREIGN KEY (p_id) REFERENCES part(p_id),";
-		transactionSQL += "FOREIGN KEY (s_id) REFERENCES salesperson(s_id),";
-		transactionSQL += "CHECK (t_id BETWEEN 1 AND 9999))";
+        NEASQL += "Energy DOUBLE NOT NULL,";
+        NEASQL += "Rtype VARCHAR(2),";
+        NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype)";
+        
+        String resourceSQL = "CREATE TABLE Resource (";
+		resourceSQL += "Rtype VARCHAR(2) NOT NULL,";
+		resourceSQL += "Density DOUBLE NOT NULL,";
+		resourceSQL += "Value DOUBLE NOT NULL,";
+		resourceSQL += "PRIMARY KEY(Rtype)";
+        
+		String containSQL = "CREATE TABLE Contain (";
+		containSQL += "NID VARCHAR(10) NOT NULL,";
+		containSQL += "Rtype VARCHAR(2) NOT NULL,";
+		containSQL += "PRIMARY KEY(NID),";
+		containSQL += "FOREIGN KEY (NID) REFERENCES NEA(NID),";
+		containSQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype)";
 
 		Statement stmt  = mySQLDB.createStatement();
 		System.out.print("Processing...");
@@ -78,16 +51,11 @@ public class CSCI3170Proj {
 		stmt.execute(NEASQL);
 
 		//System.err.println("Creating Manufacturer Table.");
-		stmt.execute(manufacturerSQL);
+		stmt.execute(resourceSQL);
 		
 		//System.err.println("Creating Salesperson Table.");
-		stmt.execute(salespersonSQL);
+		stmt.execute(containSQL);
 
-		//System.err.println("Creating Part Table.");
-		stmt.execute(partSQL);
-
-		//System.err.println("Creating Transaction Table.");
-		stmt.execute(transactionSQL);
 		System.out.println("Done! Database is initialized!");
 		stmt.close();
 	}
