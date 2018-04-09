@@ -3,9 +3,12 @@ import java.sql.*;
 import java.io.*;
 public class CSCI3170Proj {
 
-	public static String dbAddress = "jdbc:mysql://projgw.cse.cuhk.edu.hk:2312/db00";
-	public static String dbUsername = "Group00";
-	public static String dbPassword = "CSCI3170";
+	//public static String dbAddress = "jdbc:mysql://projgw.cse.cuhk.edu.hk:2312/db00";
+    public static String dbAddress = "jdbc:mysql://localhost/csci3170";
+	//public static String dbUsername = "Group00";
+    public static String dbUsername = "root";
+	//public static String dbPassword = "CSCI3170";
+    public static String dbPassword = "";
 
 	public static Connection connectToOracle(){
 		Connection con = null;
@@ -29,29 +32,29 @@ public class CSCI3170Proj {
         NEASQL += "Duration INT(3) NOT NULL,";
         NEASQL += "Energy DOUBLE NOT NULL,";
         NEASQL += "Rtype VARCHAR(2),";
-        NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype)";
+        NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
         
         String resourceSQL = "CREATE TABLE Resource (";
 		resourceSQL += "Rtype VARCHAR(2) NOT NULL,";
 		resourceSQL += "Density DOUBLE NOT NULL,";
 		resourceSQL += "Value DOUBLE NOT NULL,";
-		resourceSQL += "PRIMARY KEY(Rtype)";
+		resourceSQL += "PRIMARY KEY(Rtype))";
         
 		String containSQL = "CREATE TABLE Contain (";
 		containSQL += "NID VARCHAR(10) NOT NULL,";
 		containSQL += "Rtype VARCHAR(2) NOT NULL,";
 		containSQL += "PRIMARY KEY(NID),";
 		containSQL += "FOREIGN KEY (NID) REFERENCES NEA(NID),";
-		containSQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype)";
+		containSQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
 
 		Statement stmt  = mySQLDB.createStatement();
 		System.out.print("Processing...");
 
 		//System.err.println("Creating Category Table.");
-		stmt.execute(NEASQL);
+		stmt.execute(resourceSQL);
 
 		//System.err.println("Creating Manufacturer Table.");
-		stmt.execute(resourceSQL);
+		stmt.execute(NEASQL);
 		
 		//System.err.println("Creating Salesperson Table.");
 		stmt.execute(containSQL);
