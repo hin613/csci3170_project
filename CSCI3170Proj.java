@@ -26,13 +26,15 @@ public class CSCI3170Proj {
 
 	public static void createTables(Connection mySQLDB) throws SQLException{
 		String NEASQL = "CREATE TABLE NEA (";
-		NEASQL += "NID VARCHAR(10) PRIMARY KEY NOT NULL,";
+		NEASQL += "NID VARCHAR(10) NOT NULL,";
 		NEASQL += "Distance DOUBLE NOT NULL,";
 		NEASQL += "Family VARCHAR(6) NOT NULL,";
         NEASQL += "Duration INT(3) NOT NULL,";
         NEASQL += "Energy DOUBLE NOT NULL,";
-        NEASQL += "Rtype VARCHAR(2),";
-        NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
+        NEASQL += "PRIMARY KEY(NID))";
+        //NEASQL += "Rtype VARCHAR(2),";
+        //NEASQL += "PRIMARY KEY(NID),";
+        //NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
         
         String resourceSQL = "CREATE TABLE Resource (";
 		resourceSQL += "Rtype VARCHAR(2) NOT NULL,";
@@ -42,22 +44,62 @@ public class CSCI3170Proj {
         
 		String containSQL = "CREATE TABLE Contain (";
 		containSQL += "NID VARCHAR(10) NOT NULL,";
-		containSQL += "Rtype VARCHAR(2) NOT NULL,";
+		containSQL += "Rtype VARCHAR(2),";
 		containSQL += "PRIMARY KEY(NID),";
 		containSQL += "FOREIGN KEY (NID) REFERENCES NEA(NID),";
 		containSQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
+        
+        String spacecraftSQL = "CREATE TABLE SpacecraftModel (";
+        spacecraftSQL += "Agency VARCHAR(4) NOT NULL,";
+        spacecraftSQL += "MID VARCHAR(4) NOT NULL,";
+        spacecraftSQL += "Num INT(2) NOT NULL,";
+        spacecraftSQL += "Charge INT(5) NOT NULL,";
+        spacecraftSQL += "Duration INT(3) NOT NULL,";
+        spacecraftSQL += "Energy DOUBLE NOT NULL,";
+        spacecraftSQL += "PRIMARY KEY(Agency, MID))";
+        
+        String amodelSQL = "CREATE TABLE A_Model (";
+        amodelSQL += "Agency VARCHAR(4) NOT NULL,";
+        amodelSQL += "MID VARCHAR(4) NOT NULL,";
+        amodelSQL += "Num INT(2) NOT NULL,";
+        amodelSQL += "Charge INT(5) NOT NULL,";
+        amodelSQL += "Duration INT(3) NOT NULL,";
+        amodelSQL += "Energy DOUBLE NOT NULL,";
+        amodelSQL += "Capacity INT(2),";
+        amodelSQL += "PRIMARY KEY(Agency, MID),";
+        //amodelSQL += "FOREIGN KEY (Agency) REFERENCES SpacecraftModel(Agency),";
+        //amodelSQL += "FOREIGN KEY (MID) REFERENCES SpacecraftModel(MID))";
+        amodelSQL += "FOREIGN KEY (Agency,MID) REFERENCES SpacecraftModel(Agency,MID))";
+        
+        String rentalSQL = "CREATE TABLE RentalRecord (";
+        rentalSQL += "Agency VARCHAR(4) NOT NULL,";
+        rentalSQL += "MID VARCHAR(4) NOT NULL,";
+        rentalSQL += "SNum INT(2) NOT NULL,";
+        rentalSQL += "CheckoutDate DATE NOT NULL,";
+        rentalSQL += "ReturnDate DATE,";
+        rentalSQL += "PRIMARY KEY(Agency, MID, SNum),";
+        rentalSQL += "FOREIGN KEY (Agency,MID) REFERENCES SpacecraftModel(Agency,MID))";
 
 		Statement stmt  = mySQLDB.createStatement();
-		System.out.print("Processing...");
+		System.out.println("Processing...");
 
-		//System.err.println("Creating Category Table.");
+		System.err.println("Creating Resource Table.");
 		stmt.execute(resourceSQL);
+        
+        System.err.println("Creating SpacecraftModel Table.");
+        stmt.execute(spacecraftSQL);
 
-		//System.err.println("Creating Manufacturer Table.");
+		System.err.println("Creating NEA Table.");
 		stmt.execute(NEASQL);
 		
-		//System.err.println("Creating Salesperson Table.");
+		System.err.println("Creating Contain Table.");
 		stmt.execute(containSQL);
+        
+        System.err.println("Creating A_Model Table.");
+        stmt.execute(amodelSQL);
+        
+        System.err.println("Creating RentalRecord Table.");
+        stmt.execute(rentalSQL);
 
 		System.out.println("Done! Database is initialized!");
 		stmt.close();
@@ -65,13 +107,14 @@ public class CSCI3170Proj {
 
 	public static void deleteTables(Connection mySQLDB) throws SQLException{
 		Statement stmt  = mySQLDB.createStatement();
-		System.out.print("Processing...");
+		System.out.println("Processing...");
 		stmt.execute("SET FOREIGN_KEY_CHECKS = 0;");
-		stmt.execute("DROP TABLE IF EXISTS category");
-		stmt.execute("DROP TABLE IF EXISTS manufacturer");
-		stmt.execute("DROP TABLE IF EXISTS part");
-		stmt.execute("DROP TABLE IF EXISTS salesperson");
-		stmt.execute("DROP TABLE IF EXISTS transaction");
+		stmt.execute("DROP TABLE IF EXISTS NEA");
+		stmt.execute("DROP TABLE IF EXISTS Resource");
+		stmt.execute("DROP TABLE IF EXISTS Contain");
+		stmt.execute("DROP TABLE IF EXISTS SpacecraftModel");
+		stmt.execute("DROP TABLE IF EXISTS A_Model");
+        stmt.execute("DROP TABLE IF EXISTS RentalRecord");
 		stmt.execute("SET FOREIGN_KEY_CHECKS = 1;");
 		System.out.println("Done! Database is removed!");
 		stmt.close();
@@ -79,8 +122,9 @@ public class CSCI3170Proj {
 
 	public static void loadTables(Scanner menuAns, Connection mySQLDB) throws SQLException{
 
-		String categorySQL = "INSERT INTO category (c_id, c_name) VALUES (?,?)";
-		String manufacturerSQL = "INSERT INTO manufacturer (m_id, m_name, m_addr, m_phone) VALUES (?,?,?,?)";
+		String resourceSQL = "INSERT INTO Resource (RType, Density, Value) VALUES (?,?,?)";
+		String NEASQL = "INSERT INTO NEA (NID, Distance, Family, Duration, Energy) VALUES (?,?,?,?,?)";
+        String containSQL = "INSERT INTO Contain (NID, RType) VALUES (?,?)";
 		String partSQL = "INSERT INTO part (p_id, p_name, p_price, m_id, c_id, p_warranty, p_quantity) VALUES (?,?,?,?,?,?,?)";
 		String salespersonSQL = "INSERT INTO salesperson (s_id, s_name, s_addr, s_phone, s_experience) VALUES (?,?,?,?,?)";
 		String transactionSQL = "INSERT INTO transaction (t_id, p_id, s_id, t_date) VALUES (?,?,?,STR_TO_DATE(?,'%d/%m/%Y'))";
@@ -95,17 +139,20 @@ public class CSCI3170Proj {
 			if((new File(filePath)).isDirectory()) break;
 		}
 
-		System.out.print("Processing...");
-		//System.err.println("Loading Category");
+		System.out.println("Processing...");
+		System.err.println("Loading Resource");
 		try{
-			PreparedStatement stmt = mySQLDB.prepareStatement(categorySQL);
+			PreparedStatement stmt = mySQLDB.prepareStatement(resourceSQL);
 			String line = null;
-			BufferedReader dataReader = new BufferedReader(new FileReader(filePath+"/category.txt"));
+			BufferedReader dataReader = new BufferedReader(new FileReader(filePath+"/resources.txt"));
+            line = dataReader.readLine();
 
 			while ((line = dataReader.readLine()) != null) {
 				String[] dataFields = line.split("\t");
-				stmt.setInt(1, Integer.parseInt(dataFields[0]));
-				stmt.setString(2, dataFields[1]);
+
+                stmt.setString(1, dataFields[0]);
+                stmt.setDouble(2, Double.parseDouble(dataFields[1]));
+                stmt.setDouble(3, Double.parseDouble(dataFields[2]));
 				stmt.addBatch();
 			}
 			stmt.executeBatch();
@@ -114,22 +161,36 @@ public class CSCI3170Proj {
 			System.out.println(e);
 		}
 
-		//System.err.println("Loading Manufacturer");
+		System.err.println("Loading NEA");
 		try{
-			PreparedStatement stmt = mySQLDB.prepareStatement(manufacturerSQL);
+			PreparedStatement stmt = mySQLDB.prepareStatement(NEASQL);
+            PreparedStatement stmt2 = mySQLDB.prepareStatement(containSQL);
 			String line = null;
-			BufferedReader dataReader = new BufferedReader(new FileReader(filePath+"/manufacturer.txt"));
+			BufferedReader dataReader = new BufferedReader(new FileReader(filePath+"/neas.txt"));
+            line = dataReader.readLine();
 
 			while ((line = dataReader.readLine()) != null) {
 				String[] dataFields = line.split("\t");
-				stmt.setInt(1, Integer.parseInt(dataFields[0]));
-				stmt.setString(2, dataFields[1]);
-				stmt.setString(3, dataFields[2]);
-				stmt.setInt(4, Integer.parseInt(dataFields[3]));
+                
+                stmt.setString(1, dataFields[0]);
+                stmt.setDouble(2, Double.parseDouble(dataFields[1]));
+                stmt.setString(3, dataFields[2]);
+                stmt.setInt(4, Integer.parseInt(dataFields[3]));
+                stmt.setDouble(5, Double.parseDouble(dataFields[4]));
 				stmt.addBatch();
+                stmt2.setString(1, dataFields[0]);
+                if(!dataFields[5].equals("null")){
+                    stmt2.setString(2, dataFields[5]);
+                }
+                else{
+                    stmt2.setNull(2, Types.INTEGER);
+                }
+                stmt2.addBatch();
 			}
 			stmt.executeBatch();
+            stmt2.executeBatch();
 			stmt.close();
+            stmt2.close();
 		}catch (Exception e){
 			System.out.println(e);
 		}
