@@ -287,13 +287,13 @@ public class CSCI3170Proj {
 			System.out.println("What kinds of operation would you like to perform?");
 			System.out.println("1. Create all tables");
 			System.out.println("2. Delete all tables");
-			System.out.println("3. Load from datafile");
+			System.out.println("3. Load from a dataset");
 			System.out.println("4. Show number of records in each table");
-			System.out.println("5. Return to the main menu");
+			System.out.println("0. Return to the main menu");
 			System.out.print("Enter Your Choice: ");
 			answer = menuAns.nextLine();
 
-			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("5"))
+			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("0"))
 				break;
 			System.out.println("[Error]: Wrong Input, Type in again!!!");
 		}
@@ -309,33 +309,34 @@ public class CSCI3170Proj {
 		}
 	}
 
-	public static void searchParts(Scanner menuAns, Connection mySQLDB) throws SQLException{
+	public static void searchNEAs(Scanner menuAns, Connection mySQLDB) throws SQLException{
 		String ans = null, keyword = null, method = null, ordering = null;
 		String searchSQL = "";
 		PreparedStatement stmt = null;
 
-		searchSQL += "SELECT P.p_id, P.p_name, M.m_name, C.c_name, P.p_quantity, P.p_warranty, P.p_price ";
-		searchSQL += "FROM part P, manufacturer M, category C ";
-		searchSQL += "WHERE P.m_id = M.m_id AND P.c_id = C.c_id ";
+		searchSQL += "SELECT N.NID, N.Distance, N.Family, N.Duration, N.Energy, C.RType ";
+		searchSQL += "FROM NEA N, Contain C ";
+		searchSQL += "WHERE N.NID = C.NID";
 
 		while(true){
 			System.out.println("Choose the Search criterion:");
-			System.out.println("1. Part Name");
-			System.out.println("2. Manufacturer Name");
-			System.out.print("Choose the search criterion: ");
+			System.out.println("1. ID");
+			System.out.println("2. Family");
+            System.out.println("3. Resource Type");
+			System.out.print("My criterion: ");
 			ans = menuAns.nextLine();
-			if(ans.equals("1")||ans.equals("2")) break;
+			if(ans.equals("1")||ans.equals("2")||ans.equals("3")) break;
 		}
 		method = ans;
 
 		while(true){
-			System.out.print("Type in the Search Keyword:");
+			System.out.print("Type in the Search Keyword: ");
 			ans = menuAns.nextLine();
 			if(!ans.isEmpty()) break;
 		}
 		keyword = ans;
 
-		while(true){
+		/*while(true){
 			System.out.println("Choose ordering:");                                  
 			System.out.println("1. By price, ascending order");
 			System.out.println("2. By price, descending order");              
@@ -343,32 +344,131 @@ public class CSCI3170Proj {
 			ans = menuAns.nextLine();
 			if(ans.equals("1")||ans.equals("2")) break;
 		}   
-		ordering = ans;
+		ordering = ans;*/
 
 		if(method.equals("1")){
-			searchSQL += " AND P.p_name LIKE ? ";
+			searchSQL += " AND N.NID = ? ";
 		}else if(method.equals("2")){
-			searchSQL += " AND M.m_name LIKE ? ";
+			searchSQL += " AND N.Family LIKE ? ";
+		}else if(method.equals("3")){
+			searchSQL += " AND C.RType LIKE ? ";
 		}
 
-		if(ordering.equals("1")){
+		/*if(ordering.equals("1")){
 			searchSQL += " ORDER BY P.p_price ASC";
 		}else if(ordering.equals("2")){
 			searchSQL += " ORDER BY P.p_price DESC";
-		}
+		}*/
 
 		stmt = mySQLDB.prepareStatement(searchSQL);
 		stmt.setString(1, "%" + keyword + "%");
+        
+        if(method.equals("1")){
+			stmt.setString(1, keyword);
+		}else if(method.equals("2")){
+			stmt.setString(1, "%" + keyword + "%");
+		}else if(method.equals("3")){
+			stmt.setString(1, "%" + keyword + "%");
+		}
 
-		String[] field_name = {"ID", "Name", "Manufacturer", "Category", "Quantity", "Warranty", "Price"};
-		for (int i = 0; i < 7; i++){
+		String[] field_name = {"ID", "Distance", "Family", "Duration", "Energy", "Resources"};
+		for (int i = 0; i < 6; i++){
 			 System.out.print("| " + field_name[i] + " ");
 		}
 		System.out.println("|");
 
 		ResultSet resultSet = stmt.executeQuery();
 		while(resultSet.next()){
-			for (int i = 1; i <= 7; i++){
+			for (int i = 1; i <= 6; i++){
+				System.out.print("| " + resultSet.getString(i) + " ");
+			}    
+			System.out.println("|");
+		}
+		System.out.println("End of Query");
+		resultSet.close();
+		stmt.close();
+	}
+    
+    public static void searchSpacecrafts(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String ans = null, keyword = null, method = null, ordering = null;
+		String searchSQL = "";
+		PreparedStatement stmt = null;
+
+		searchSQL += "SELECT * FROM (SELECT S.Agency, S.MID, S.Num, IF(A.Capacity IS NULL, 'E', 'A') AS Type, S.Energy, S.Duration, A.Capacity, S.Charge ";
+		searchSQL += "FROM SpacecraftModel S ";
+		searchSQL += "LEFT JOIN A_Model A ";
+        searchSQL += "ON S.Agency = A.Agency AND S.MID = A.MID) AS TEMP WHERE";
+
+		while(true){
+			System.out.println("Choose the Search criterion:");
+			System.out.println("1. Agency Name");
+			System.out.println("2. Type");
+            System.out.println("3. Least energy [km/s]");
+            System.out.println("4. Least working time [days]");
+            System.out.println("5. Least capacity [m^3]");
+			System.out.print("My criterion: ");
+			ans = menuAns.nextLine();
+			if(ans.equals("1")||ans.equals("2")||ans.equals("3")||ans.equals("4")||ans.equals("5")) break;
+		}
+		method = ans;
+
+		while(true){
+			System.out.print("Type in the Search Keyword: ");
+			ans = menuAns.nextLine();
+			if(!ans.isEmpty()) break;
+		}
+		keyword = ans;
+
+		/*while(true){
+			System.out.println("Choose ordering:");                                  
+			System.out.println("1. By price, ascending order");
+			System.out.println("2. By price, descending order");              
+			System.out.print("Choose the search criterion: ");
+			ans = menuAns.nextLine();
+			if(ans.equals("1")||ans.equals("2")) break;
+		}   
+		ordering = ans;*/
+
+		if(method.equals("1")){
+			searchSQL += " Agency = ? ";
+		}else if(method.equals("2")){
+			searchSQL += " Type = ? ";
+		}else if(method.equals("3")){
+			searchSQL += " Energy > ? ";
+		}else if(method.equals("4")){
+			searchSQL += " Duration > ? ";
+		}else if(method.equals("5")){
+			searchSQL += " Capacity > ? ";
+		}
+
+		/*if(ordering.equals("1")){
+			searchSQL += " ORDER BY P.p_price ASC";
+		}else if(ordering.equals("2")){
+			searchSQL += " ORDER BY P.p_price DESC";
+		}*/
+
+		stmt = mySQLDB.prepareStatement(searchSQL);
+        if(method.equals("1")){
+			stmt.setString(1, keyword);
+		}else if(method.equals("2")){
+			stmt.setString(1, keyword);
+		}else if(method.equals("3")){
+			stmt.setDouble(1, Double.parseDouble(keyword));
+		}else if(method.equals("4")){
+			stmt.setInt(1, Integer.parseInt(keyword));
+		}else if(method.equals("5")){
+			stmt.setInt(1, Integer.parseInt(keyword));
+		}
+
+		String[] field_name = {"Agency", "MID", "SNum", "Type", "Energy", "T", "Capacity", "Charge"};
+		for (int i = 0; i < 8; i++){
+			 System.out.print("| " + field_name[i] + " ");
+		}
+		System.out.println("|");
+
+		ResultSet resultSet = stmt.executeQuery();
+		while(resultSet.next()){
+			for (int i = 1; i <= 8; i++){
 				System.out.print("| " + resultSet.getString(i) + " ");
 			}    
 			System.out.println("|");
@@ -429,21 +529,23 @@ public class CSCI3170Proj {
 			System.out.println();
 			System.out.println("-----Operations for salesperson menu-----");
 			System.out.println("What kinds of operation would you like to perform?");
-			System.out.println("1. Search for parts");
-			System.out.println("2. Sell a part");
-			System.out.println("3. Return to the main menu");
+			System.out.println("1. Search for NEAs based on some criteria");
+			System.out.println("2. Search for spacecrafts based on some criteria");
+            System.out.println("3. A certain NEA exploration mission design");
+            System.out.println("4. The most beneficial NEA exploration mission design");
+			System.out.println("0. Return to the main menu");
 			System.out.print("Enter Your Choice: ");
 			answer = menuAns.nextLine();
 			
-			if(answer.equals("1")||answer.equals("2")||answer.equals("3"))
+			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("0"))
 				break;
 			System.out.println("[Error]: Wrong Input, Type in again!!!");
 		}
 		
 		if(answer.equals("1")){
-			searchParts(menuAns, mySQLDB);
+			searchNEAs(menuAns, mySQLDB);
 		}else if(answer.equals("2")){
-			sellProducts(menuAns, mySQLDB);
+			searchSpacecrafts(menuAns, mySQLDB);
 		}
 	}
 
