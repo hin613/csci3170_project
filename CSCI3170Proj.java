@@ -264,10 +264,10 @@ public class CSCI3170Proj {
 	}
 
 	public static void showTables(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String[] table_name = {"category", "manufacturer", "part", "salesperson", "transaction"};
+		String[] table_name = {"Resource", "NEA", "Contain", "SpacecraftModel", "A_Model", "RentalRecord"};
 
-		System.out.println("Number of records in each table:");
-		for (int i = 0; i < 5; i++){
+		System.out.println("Number of records in each table:\n");
+		for (int i = 0; i < 6; i++){
 			Statement stmt  = mySQLDB.createStatement();
 			ResultSet rs = stmt.executeQuery("select count(*) from "+table_name[i]);
 
