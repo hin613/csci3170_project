@@ -419,16 +419,6 @@ public class CSCI3170Proj {
 		}
 		keyword = ans;
 
-		/*while(true){
-			System.out.println("Choose ordering:");                                  
-			System.out.println("1. By price, ascending order");
-			System.out.println("2. By price, descending order");              
-			System.out.print("Choose the search criterion: ");
-			ans = menuAns.nextLine();
-			if(ans.equals("1")||ans.equals("2")) break;
-		}   
-		ordering = ans;*/
-
 		if(method.equals("1")){
 			searchSQL += " Agency = ? ";
 		}else if(method.equals("2")){
@@ -440,12 +430,6 @@ public class CSCI3170Proj {
 		}else if(method.equals("5")){
 			searchSQL += " Capacity > ? ";
 		}
-
-		/*if(ordering.equals("1")){
-			searchSQL += " ORDER BY P.p_price ASC";
-		}else if(ordering.equals("2")){
-			searchSQL += " ORDER BY P.p_price DESC";
-		}*/
 
 		stmt = mySQLDB.prepareStatement(searchSQL);
         if(method.equals("1")){
@@ -476,6 +460,52 @@ public class CSCI3170Proj {
 		System.out.println("End of Query");
 		resultSet.close();
 		stmt.close();
+	}
+    
+    public static void NEAExploration(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String ans = null, keyword = null, ordering = null;
+		String searchSQL = "";
+		PreparedStatement stmt = null;
+        
+        Statement prestmt  = mySQLDB.createStatement();
+		prestmt.execute("CREATE OR REPLACE VIEW T1 AS SELECT A.Agency, A.MID, A.Num, R.SNum, R.CheckoutDate, R.ReturnDate, A.Charge, A.Duration, A.Energy, A.Capacity FROM RentalRecord R, A_Model A WHERE (R.ReturnDate IS NOT NULL OR (R.CheckoutDate IS NULL AND R.ReturnDate IS NULL)) AND R.Agency=A.Agency AND R.MID=A.MID");
+		prestmt.execute("CREATE OR REPLACE VIEW T2 AS SELECT N.NID, N.Distance, N.Family, N.Duration, N.Energy, C.Rtype FROM NEA N, Contain C WHERE N.NID=C.NID");
+		prestmt.execute("CREATE OR REPLACE VIEW T3 AS SELECT T2.*, R.Density, R.Value FROM T2 LEFT JOIN Resource R ON T2.RType=R.RType");
+        
+        searchSQL = "SELECT T1.Agency, T1.MID, T1.SNum ,(T1.Charge * T3.Duration)AS Cost, ((IF(T3.Value IS NULL,0,T3.Value)*IF(T3.Density IS NULL,0,T3.Density)*T1.Capacity)-(T1.Charge * T3.Duration))AS Benefit FROM T1, T3 WHERE T1.Energy>T3.Energy AND T1.Duration>T3.Duration AND T3.NID=?";
+
+		while(true){
+			System.out.print("Type in the Search Keyword: ");
+			ans = menuAns.nextLine();
+			if(!ans.isEmpty()) break;
+		}
+		keyword = ans;
+        
+        searchSQL += " ORDER BY Benefit DESC";
+
+		stmt = mySQLDB.prepareStatement(searchSQL);
+        stmt.setString(1, keyword);
+
+		String[] field_name = {"Agency", "MID", "SNum", "Cost", "Benefit"};
+		for (int i = 0; i < 5; i++){
+			 System.out.print("| " + field_name[i] + " ");
+		}
+		System.out.println("|");
+
+		ResultSet resultSet = stmt.executeQuery();
+		while(resultSet.next()){
+			for (int i = 1; i <= 5; i++){
+				System.out.print("| " + resultSet.getString(i) + " ");
+			}    
+			System.out.println("|");
+		}
+		System.out.println("End of Query");
+		resultSet.close();
+		stmt.close();
+        prestmt.execute("DROP VIEW T1");
+        prestmt.execute("DROP VIEW T2");
+        prestmt.execute("DROP VIEW T3");
+        prestmt.close();
 	}
 
 	public static void sellProducts(Scanner menuAns, Connection mySQLDB) throws SQLException{
@@ -546,6 +576,8 @@ public class CSCI3170Proj {
 			searchNEAs(menuAns, mySQLDB);
 		}else if(answer.equals("2")){
 			searchSpacecrafts(menuAns, mySQLDB);
+		}else if(answer.equals("3")){
+			NEAExploration(menuAns, mySQLDB);
 		}
 	}
 
