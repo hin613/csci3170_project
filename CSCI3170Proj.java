@@ -485,6 +485,8 @@ public class CSCI3170Proj {
 
 		stmt = mySQLDB.prepareStatement(searchSQL);
         stmt.setString(1, keyword);
+        
+        System.out.println("All possible solutions:");
 
 		String[] field_name = {"Agency", "MID", "SNum", "Cost", "Benefit"};
 		for (int i = 0; i < 5; i++){
@@ -505,6 +507,63 @@ public class CSCI3170Proj {
         prestmt.execute("DROP VIEW T1");
         prestmt.execute("DROP VIEW T2");
         prestmt.execute("DROP VIEW T3");
+        prestmt.close();
+	}
+    
+    public static void BeneficialExploration(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String ans = null, budget = null, rtype = null, ordering = null;
+		String searchSQL = "";
+		PreparedStatement stmt = null;
+        
+        Statement prestmt  = mySQLDB.createStatement();
+		prestmt.execute("CREATE OR REPLACE VIEW T1 AS SELECT A.Agency, A.MID, A.Num, R.SNum, R.CheckoutDate, R.ReturnDate, A.Charge, A.Duration, A.Energy, A.Capacity FROM RentalRecord R, A_Model A WHERE (R.ReturnDate IS NOT NULL OR (R.CheckoutDate IS NULL AND R.ReturnDate IS NULL)) AND R.Agency=A.Agency AND R.MID=A.MID");
+		prestmt.execute("CREATE OR REPLACE VIEW T2 AS SELECT N.NID, N.Distance, N.Family, N.Duration, N.Energy, C.Rtype FROM NEA N, Contain C WHERE N.NID=C.NID");
+		prestmt.execute("CREATE OR REPLACE VIEW T3 AS SELECT T2.*, R.Density, R.Value FROM T2 LEFT JOIN Resource R ON T2.RType=R.RType");
+        prestmt.execute("CREATE OR REPLACE VIEW T4 AS SELECT T3.NID, T3.Family, T1.Agency, T1.MID, T1.SNum , T3.Duration,(T1.Charge * T3.Duration)AS Cost, ((IF(T3.Value IS NULL,0,T3.Value)*IF(T3.Density IS NULL,0,T3.Density)*T1.Capacity)-(T1.Charge * T3.Duration))AS Benefit, T3.RType FROM T1, T3 WHERE T1.Energy>T3.Energy AND T1.Duration>T3.Duration");
+        
+        searchSQL = "SELECT * FROM T4,(SELECT MAX(Benefit)AS MAXBenefit FROM T4 WHERE Cost<=? AND RType=?)AS T5 WHERE T4.Benefit=T5.MAXBenefit AND T4.Cost<=? AND T4.RType=?";
+
+		while(true){
+			System.out.print("Type in the your budget [$]: ");
+			ans = menuAns.nextLine();
+			if(!ans.isEmpty()) break;
+		}
+		budget = ans;
+        
+        while(true){
+			System.out.print("Type in the resource type: ");
+			ans = menuAns.nextLine();
+			if(!ans.isEmpty()) break;
+		}
+        rtype = ans;
+
+		stmt = mySQLDB.prepareStatement(searchSQL);
+        stmt.setString(1, budget);
+        stmt.setString(2, rtype);
+        stmt.setString(3, budget);
+        stmt.setString(4, rtype);
+        
+        System.out.println("The most beneficial mission is:");
+
+		String[] field_name = {"NEA ID", "Family", "Agency", "MID", "SNum", "Duration", "Cost", "Benefit"};
+		for (int i = 0; i < 8; i++){
+			 System.out.print("| " + field_name[i] + " ");
+		}
+		System.out.println("|");
+
+		ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        for (int i = 1; i <= 8; i++){
+            System.out.print("| " + resultSet.getString(i) + " ");
+        }    
+        System.out.println("|");
+		System.out.println("End of Query");
+		resultSet.close();
+		stmt.close();
+        prestmt.execute("DROP VIEW T1");
+        prestmt.execute("DROP VIEW T2");
+        prestmt.execute("DROP VIEW T3");
+        prestmt.execute("DROP VIEW T4");
         prestmt.close();
 	}
 
@@ -578,6 +637,8 @@ public class CSCI3170Proj {
 			searchSpacecrafts(menuAns, mySQLDB);
 		}else if(answer.equals("3")){
 			NEAExploration(menuAns, mySQLDB);
+		}else if(answer.equals("4")){
+			BeneficialExploration(menuAns, mySQLDB);
 		}
 	}
 
