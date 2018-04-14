@@ -34,9 +34,6 @@ public class CSCI3170Proj {
         NEASQL += "Duration INT(3) NOT NULL,";
         NEASQL += "Energy DOUBLE NOT NULL,";
         NEASQL += "PRIMARY KEY(NID))";
-        //NEASQL += "Rtype VARCHAR(2),";
-        //NEASQL += "PRIMARY KEY(NID),";
-        //NEASQL += "FOREIGN KEY (Rtype) REFERENCES Resource(Rtype))";
         
         String resourceSQL = "CREATE TABLE Resource (";
 		resourceSQL += "Rtype VARCHAR(2) NOT NULL,";
@@ -338,16 +335,6 @@ public class CSCI3170Proj {
 		}
 		keyword = ans;
 
-		/*while(true){
-			System.out.println("Choose ordering:");                                  
-			System.out.println("1. By price, ascending order");
-			System.out.println("2. By price, descending order");              
-			System.out.print("Choose the search criterion: ");
-			ans = menuAns.nextLine();
-			if(ans.equals("1")||ans.equals("2")) break;
-		}   
-		ordering = ans;*/
-
 		if(method.equals("1")){
 			searchSQL += " AND N.NID = ? ";
 		}else if(method.equals("2")){
@@ -355,12 +342,6 @@ public class CSCI3170Proj {
 		}else if(method.equals("3")){
 			searchSQL += " AND C.RType LIKE ? ";
 		}
-
-		/*if(ordering.equals("1")){
-			searchSQL += " ORDER BY P.p_price ASC";
-		}else if(ordering.equals("2")){
-			searchSQL += " ORDER BY P.p_price DESC";
-		}*/
 
 		stmt = mySQLDB.prepareStatement(searchSQL);
 		stmt.setString(1, "%" + keyword + "%");
@@ -569,7 +550,40 @@ public class CSCI3170Proj {
         prestmt.close();
 	}
 
-	public static void rentSpacecraft(Scanner menuAns, Connection mySQLDB) throws SQLException{
+	
+
+	public static void customersMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String answer = "";
+
+		while(true){
+			System.out.println();
+			System.out.println("-----Operations for explorational companies (rental customers)-----");
+			System.out.println("What kinds of operation would you like to perform?");
+			System.out.println("1. Search for NEAs based on some criteria");
+			System.out.println("2. Search for spacecrafts based on some criteria");
+            System.out.println("3. A certain NEA exploration mission design");
+            System.out.println("4. The most beneficial NEA exploration mission design");
+			System.out.println("0. Return to the main menu");
+			System.out.print("Enter Your Choice: ");
+			answer = menuAns.nextLine();
+			
+			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("0"))
+				break;
+			System.out.println("[Error]: Wrong Input, Type in again!!!");
+		}
+		
+		if(answer.equals("1")){
+			searchNEAs(menuAns, mySQLDB);
+		}else if(answer.equals("2")){
+			searchSpacecrafts(menuAns, mySQLDB);
+		}else if(answer.equals("3")){
+			NEAExploration(menuAns, mySQLDB);
+		}else if(answer.equals("4")){
+			BeneficialExploration(menuAns, mySQLDB);
+		}
+	}
+    
+    public static void rentSpacecraft(Scanner menuAns, Connection mySQLDB) throws SQLException{
         String selectSQL = "SELECT COUNT(*) FROM RentalRecord R WHERE R.Agency=? AND R.MID=? AND R.SNum=? AND (R.ReturnDate IS NOT NULL OR (R.CheckoutDate IS NULL AND R.ReturnDate IS NULL))";
 		String updateSQL = "UPDATE RentalRecord R set R.CheckoutDate = ?, R.ReturnDate = NULL WHERE R.Agency=? AND R.MID=? AND R.SNum=?";
         Calendar calendar = Calendar.getInstance();
@@ -602,9 +616,6 @@ public class CSCI3170Proj {
 		
 		ResultSet resultSet = stmt.executeQuery();
         resultSet.next();
-        /*System.out.print("| " + resultSet.getInt(1) + " |");
-        System.out.println();
-        System.out.println("End of Query");*/
         if(resultSet.getInt(1)!=1){
             System.err.println("[Error]: This spacecraft is not available to be rented");
             resultSet.close();
@@ -662,9 +673,6 @@ public class CSCI3170Proj {
 		
 		ResultSet resultSet = stmt.executeQuery();
         resultSet.next();
-        /*System.out.print("| " + resultSet.getInt(1) + " |");
-        System.out.println();
-        System.out.println("End of Query");*/
         if(resultSet.getInt(1)!=1){
             System.err.println("[Error]: This spacecraft is not available to be returned");
             resultSet.close();
@@ -688,127 +696,6 @@ public class CSCI3170Proj {
         
         System.out.println("Spacecraft returned successfully!");
 
-	}
-
-	public static void customersMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String answer = "";
-
-		while(true){
-			System.out.println();
-			System.out.println("-----Operations for explorational companies (rental customers)-----");
-			System.out.println("What kinds of operation would you like to perform?");
-			System.out.println("1. Search for NEAs based on some criteria");
-			System.out.println("2. Search for spacecrafts based on some criteria");
-            System.out.println("3. A certain NEA exploration mission design");
-            System.out.println("4. The most beneficial NEA exploration mission design");
-			System.out.println("0. Return to the main menu");
-			System.out.print("Enter Your Choice: ");
-			answer = menuAns.nextLine();
-			
-			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("0"))
-				break;
-			System.out.println("[Error]: Wrong Input, Type in again!!!");
-		}
-		
-		if(answer.equals("1")){
-			searchNEAs(menuAns, mySQLDB);
-		}else if(answer.equals("2")){
-			searchSpacecrafts(menuAns, mySQLDB);
-		}else if(answer.equals("3")){
-			NEAExploration(menuAns, mySQLDB);
-		}else if(answer.equals("4")){
-			BeneficialExploration(menuAns, mySQLDB);
-		}
-	}
-
-	public static void countSalespersonRecord(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String recordSQL = "SELECT S.s_id, S.s_name, S.s_experience, COUNT(T.t_id) ";
-		recordSQL += "FROM transaction T, salesperson S ";
-		recordSQL += "WHERE T.s_id = S.s_id AND S.s_experience >= ? AND S.s_experience <= ? ";
-		recordSQL += "GROUP BY S.s_id, S.s_name, S.s_experience ";
-		recordSQL += "ORDER BY S.s_id DESC";
-		
-		String expBegin = null, expEnd = null;
-
-		while(true){
-			System.out.print("Type in the lower bound for years of experience: ");
-			expBegin = menuAns.nextLine();
-			if(!expBegin.isEmpty()) break;
-		}
-
-		while(true){
-			System.out.print("Type in the upper bound for years of experience: ");
-			expEnd = menuAns.nextLine();
-			if(!expEnd.isEmpty()) break;
-		}
-
-		PreparedStatement stmt  = mySQLDB.prepareStatement(recordSQL);
-		stmt.setInt(1, Integer.parseInt(expBegin));
-		stmt.setInt(2, Integer.parseInt(expEnd));
-		
-		ResultSet resultSet = stmt.executeQuery();
-
-		System.out.println("Transaction Record:");
-		
-		System.out.println("| ID | Name | Years of Experience | Number of Transaction |");
-		while(resultSet.next()){
-			for (int i = 1; i <= 4; i++){
-				System.out.print("| " + resultSet.getString(i) + " ");
-			}
-			System.out.println("|");
-		}
-		System.out.println("End of Query");
-	}
-
-	public static void showPopularPart(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String ans;
-		int booknum = 0, i = 0;
-		String sql = "SELECT P.p_id, P.p_name, count(*) "+
-					 "FROM part P, transaction T "+
-					 "WHERE P.p_id = T.p_id "+
-					 "GROUP BY P.p_id, P.p_name "+
-					 "ORDER BY count(*) DESC";
-
-		while(true){
-			System.out.print("Type in the number of parts: ");
-			ans = menuAns.nextLine();
-			if(!ans.isEmpty()) break;
-		}
-
-		booknum = Integer.parseInt(ans);
-		Statement stmt  = mySQLDB.createStatement();
-		ResultSet resultSet = stmt.executeQuery(sql);
-		System.out.println("| Part ID | Part Name | No. of Transaction |");
-		while(resultSet.next() && i < booknum){
-			System.out.println( "| " + resultSet.getString(1) + " " +
-								"| " + resultSet.getString(2) + " " +
-								"| " + resultSet.getString(3) + " " +
-								"|");
-			i++;
-		}
-		System.out.println("End of Query");
-		stmt.close();
-	}
-
-	public static void showTotalSales(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String sql = "SELECT M.m_id, M.m_name, SUM(P.p_price) as total_sum "+
-					 "FROM transaction T, part P, manufacturer M " +
-					 "WHERE T.p_id = P.p_id AND P.m_id = M.m_id " +
-					 "GROUP BY M.m_id, M.m_name " + 
-					 "ORDER by total_sum DESC";
-
-		Statement stmt  = mySQLDB.createStatement();
-		ResultSet resultSet = stmt.executeQuery(sql);
-	
-		System.out.println("| Manufacturer ID | Manufacturer Name | Total Sales Value |");
-		while(resultSet.next()){
-			System.out.println(	"| " + resultSet.getString(1) + " " +
-								"| " + resultSet.getString(2) + " " +          
-								"| " + resultSet.getString(3) + " " + 
-								"|"); 
-		}
-		System.out.println("End of Query");
-		stmt.close();
 	}
     
     public static void showRentedOut(Scanner menuAns, Connection mySQLDB) throws SQLException{
