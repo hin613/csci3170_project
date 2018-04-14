@@ -810,6 +810,41 @@ public class CSCI3170Proj {
 		System.out.println("End of Query");
 		stmt.close();
 	}
+    
+    public static void showRentedOut(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String selectSQL = "SELECT R.Agency, R.MID, R.SNum, DATE_FORMAT(R.CheckoutDate, '%d-%m-%Y')AS Checkout FROM RentalRecord R WHERE (R.ReturnDate IS NULL) AND R.CheckoutDate>=STR_TO_DATE(?,'%d-%m-%Y') AND R.CheckoutDate<=STR_TO_DATE(?,'%d-%m-%Y') ORDER BY Checkout DESC";
+        String start = null, end = null;
+        
+        while(true){
+			System.out.print("Typing in the starting date [DD-MM-YYYY]: ");
+			start = menuAns.nextLine();
+			if(!start.isEmpty()) break;
+		}
+        
+        while(true){
+			System.out.print("Typing in the ending date [DD-MM-YYYY]: ");
+			end = menuAns.nextLine();
+			if(!end.isEmpty()) break;
+		}
+        
+        PreparedStatement stmt  = mySQLDB.prepareStatement(selectSQL);
+		stmt.setString(1, start);
+		stmt.setString(2, end);
+
+		ResultSet resultSet = stmt.executeQuery();
+	
+		System.out.println("List of the unreturned spacecraft:");
+		
+		System.out.println("| Agency | MID | SNum | Checkout Date |");
+		while(resultSet.next()){
+			for (int i = 1; i <= 4; i++){
+				System.out.print("| " + resultSet.getString(i) + " ");
+			}
+			System.out.println("|");
+		}
+		System.out.println("End of Query");
+		stmt.close();
+	}
 
 	public static void staffMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
 		String answer = "";
@@ -836,7 +871,7 @@ public class CSCI3170Proj {
 		}else if(answer.equals("2")){
 			returnSpacecraft(menuAns, mySQLDB);
 		}else if(answer.equals("3")){
-			showPopularPart(menuAns, mySQLDB);
+			showRentedOut(menuAns, mySQLDB);
 		}else if(answer.equals("4")){
 			showPopularPart(menuAns, mySQLDB);
 		}
