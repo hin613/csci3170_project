@@ -714,7 +714,7 @@ public class CSCI3170Proj {
 			if(!end.isEmpty()) break;
 		}
         
-        PreparedStatement stmt  = mySQLDB.prepareStatement(selectSQL);
+        PreparedStatement stmt = mySQLDB.prepareStatement(selectSQL);
 		stmt.setString(1, start);
 		stmt.setString(2, end);
 
@@ -729,6 +729,26 @@ public class CSCI3170Proj {
 			}
 			System.out.println("|");
 		}
+        System.out.println("...");
+		System.out.println("End of Query");
+		stmt.close();
+	}
+    
+    public static void showRentedOutAgency(Scanner menuAns, Connection mySQLDB) throws SQLException{
+		String selectSQL = "SELECT Agency, COUNT(*) FROM RentalRecord R WHERE R.ReturnDate IS NULL GROUP BY Agency";
+        
+        PreparedStatement stmt = mySQLDB.prepareStatement(selectSQL);
+
+		ResultSet resultSet = stmt.executeQuery();
+		
+		System.out.println("| Agency | Number |");
+		while(resultSet.next()){
+			for (int i = 1; i <= 2; i++){
+				System.out.print("| " + resultSet.getString(i) + " ");
+			}
+			System.out.println("|");
+		}
+        System.out.println("...");
 		System.out.println("End of Query");
 		stmt.close();
 	}
@@ -760,7 +780,7 @@ public class CSCI3170Proj {
 		}else if(answer.equals("3")){
 			showRentedOut(menuAns, mySQLDB);
 		}else if(answer.equals("4")){
-			showPopularPart(menuAns, mySQLDB);
+			showRentedOutAgency(menuAns, mySQLDB);
 		}
 	}
 
