@@ -1,6 +1,8 @@
 import java.util.Scanner;
+import java.util.Calendar;
 import java.sql.*;
 import java.io.*;
+
 public class CSCI3170Proj {
 
 	//public static String dbAddress = "jdbc:mysql://projgw.cse.cuhk.edu.hk:2312/db00";
@@ -567,56 +569,83 @@ public class CSCI3170Proj {
         prestmt.close();
 	}
 
-	public static void sellProducts(Scanner menuAns, Connection mySQLDB) throws SQLException{
-		String updateProductSQL = "UPDATE part set p_quantity = p_quantity - 1 WHERE p_id = ? and p_quantity > 0";
-		String insertRecordSQL = "INSERT INTO transaction VALUES (NULL, ?, ?, CURDATE())";
-		String remainQuantitySQL = "SELECT p_id, p_name, p_quantity FROM part WHERE p_id = ?";
+	public static void rentSpacecraft(Scanner menuAns, Connection mySQLDB) throws SQLException{
+        String selectSQL = "SELECT COUNT(*) FROM RentalRecord R WHERE R.Agency=? AND R.MID=? AND R.SNum=? AND (R.ReturnDate IS NOT NULL OR (R.CheckoutDate IS NULL AND R.ReturnDate IS NULL))";
+		String updateSQL = "UPDATE RentalRecord R set R.CheckoutDate = ?, R.ReturnDate = NULL WHERE R.Agency=? AND R.MID=? AND R.SNum=?";
+        Calendar calendar = Calendar.getInstance();
+        java.sql.Date DateObject = new java.sql.Date(calendar.getTime().getTime());
 
-		String p_id = null, s_id = null;
+		String Agency = null, MID = null, SNum = null;
 
 		while(true){
-			System.out.print("Enter The Part ID: ");
-			p_id = menuAns.nextLine();
-			if(!p_id.isEmpty()) break;
+			System.out.print("Enter the space agency name: ");
+			Agency = menuAns.nextLine();
+			if(!Agency.isEmpty()) break;
 		}
 
 		while(true){
-			System.out.print("Enter The Salesperson ID: ");
-			s_id = menuAns.nextLine();
-			if(!s_id.isEmpty()) break;
+			System.out.print("Enter the MID: ");
+			MID = menuAns.nextLine();
+			if(!MID.isEmpty()) break;
+		}
+        
+        while(true){
+			System.out.print("Enter the SNum: ");
+			SNum = menuAns.nextLine();
+			if(!SNum.isEmpty()) break;
 		}
 
-		PreparedStatement stmt = mySQLDB.prepareStatement(updateProductSQL);
-		stmt.setString(1, p_id);
+		PreparedStatement stmt = mySQLDB.prepareStatement(selectSQL);
+		stmt.setString(1, Agency);
+        stmt.setString(2, MID);
+        stmt.setString(3, SNum);
 		
-		int retVal = stmt.executeUpdate();
-		if(retVal == 0){
+		ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        /*System.out.print("| " + resultSet.getInt(1) + " |");
+        System.out.println();
+        System.out.println("End of Query");*/
+        if(resultSet.getInt(1)!=1){
+            System.err.println("[Error]: This spacecraft is not available to be rented");
+            resultSet.close();
+            stmt.close();
+            return;
+        }
+		
+        resultSet.close();
+        //System.out.println("hello");
+        
+		/*if(retVal == 0){
 			System.err.println("[Error]: This Product is currently out of stock");
 			return;
-		}
+		}*/
 		stmt.close();
+        
+        System.out.println(DateObject);
 
-		PreparedStatement stmt2 = mySQLDB.prepareStatement(insertRecordSQL);
-		stmt2.setString(1, p_id);
-		stmt2.setString(2, s_id);
+		PreparedStatement stmt2 = mySQLDB.prepareStatement(updateSQL);
+		stmt2.setDate(1, DateObject);
+		stmt2.setString(2, Agency);
+        stmt2.setString(3, MID);
+        stmt2.setString(4, SNum);
 		stmt2.executeUpdate();
 		stmt2.close();
 
-		PreparedStatement stmt3 = mySQLDB.prepareStatement(remainQuantitySQL);
+		/*PreparedStatement stmt3 = mySQLDB.prepareStatement(remainQuantitySQL);
 		stmt3.setString(1, p_id);  
 		ResultSet resultSet = stmt3.executeQuery();
 		resultSet.next();
 		System.out.println("Product: "+ resultSet.getString(2) + "(id: " + resultSet.getString(1) + ") Remaining Quality: " + resultSet.getString(3));
 
-		stmt3.close();
+		stmt3.close();*/
 	}
 
-	public static void staffMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
+	public static void customersMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
 		String answer = "";
 
 		while(true){
 			System.out.println();
-			System.out.println("-----Operations for salesperson menu-----");
+			System.out.println("-----Operations for explorational companies (rental customers)-----");
 			System.out.println("What kinds of operation would you like to perform?");
 			System.out.println("1. Search for NEAs based on some criteria");
 			System.out.println("2. Search for spacecrafts based on some criteria");
@@ -732,30 +761,33 @@ public class CSCI3170Proj {
 		stmt.close();
 	}
 
-	public static void managerMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
+	public static void staffMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
 		String answer = "";
 
 		while(true){
 			System.out.println();
-			System.out.println("-----Operations for manager menu-----");
+			System.out.println("-----Operations for spacecraft rental staff-----");
 			System.out.println("What kinds of operation would you like to perform?");
-			System.out.println("1. Count the no. of sales record of each salesperson under a specific range on years of experience");
-			System.out.println("2. Show the total sales value of each manufacturer");
-			System.out.println("3. Show the N most popular part");
-			System.out.println("4. Return to the main menu");
+			System.out.println("1. Rent a spacecraft");
+			System.out.println("2. Return a spacecraft");
+			System.out.println("3. List all spacecrafts currently rented out (on a mission) for a certain period");
+			System.out.println("4. List the number of spacecrafts currently rented out by each agency");
+            System.out.println("0. Return to the main menu");
 			System.out.print("Enter Your Choice: ");
 			answer = menuAns.nextLine();
 
-			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4"))
+			if(answer.equals("1")||answer.equals("2")||answer.equals("3")||answer.equals("4")||answer.equals("0"))
 				break;
 			System.out.println("[Error]: Wrong Input, Type in again!!!");
 		}
 
 		if(answer.equals("1")){
-			countSalespersonRecord(menuAns, mySQLDB);
+			rentSpacecraft(menuAns, mySQLDB);
 		}else if(answer.equals("2")){
 			showTotalSales(menuAns, mySQLDB);
 		}else if(answer.equals("3")){
+			showPopularPart(menuAns, mySQLDB);
+		}else if(answer.equals("4")){
 			showPopularPart(menuAns, mySQLDB);
 		}
 	}
@@ -781,9 +813,9 @@ public class CSCI3170Proj {
 				if(answer.equals("1")){
 					adminMenu(menuAns, mySQLDB);
 				}else if(answer.equals("2")){
-					staffMenu(menuAns, mySQLDB);
+					customersMenu(menuAns, mySQLDB);
 				}else if(answer.equals("3")){
-					managerMenu(menuAns, mySQLDB);
+					staffMenu(menuAns, mySQLDB);
 				}else if(answer.equals("0")){
 					break;
 				}else{
