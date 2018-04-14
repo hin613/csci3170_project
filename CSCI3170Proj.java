@@ -613,12 +613,6 @@ public class CSCI3170Proj {
         }
 		
         resultSet.close();
-        //System.out.println("hello");
-        
-		/*if(retVal == 0){
-			System.err.println("[Error]: This Product is currently out of stock");
-			return;
-		}*/
 		stmt.close();
         
         System.out.println(DateObject);
@@ -630,14 +624,70 @@ public class CSCI3170Proj {
         stmt2.setString(4, SNum);
 		stmt2.executeUpdate();
 		stmt2.close();
+        
+        System.out.println("Spacecraft rented successfully!");
 
-		/*PreparedStatement stmt3 = mySQLDB.prepareStatement(remainQuantitySQL);
-		stmt3.setString(1, p_id);  
-		ResultSet resultSet = stmt3.executeQuery();
-		resultSet.next();
-		System.out.println("Product: "+ resultSet.getString(2) + "(id: " + resultSet.getString(1) + ") Remaining Quality: " + resultSet.getString(3));
+	}
+    
+    public static void returnSpacecraft(Scanner menuAns, Connection mySQLDB) throws SQLException{
+        String selectSQL = "SELECT COUNT(*) FROM RentalRecord R WHERE R.Agency=? AND R.MID=? AND R.SNum=? AND (R.ReturnDate IS NULL)";
+		String updateSQL = "UPDATE RentalRecord R set R.ReturnDate = ? WHERE R.Agency=? AND R.MID=? AND R.SNum=?";
+        Calendar calendar = Calendar.getInstance();
+        java.sql.Date DateObject = new java.sql.Date(calendar.getTime().getTime());
 
-		stmt3.close();*/
+		String Agency = null, MID = null, SNum = null;
+
+		while(true){
+			System.out.print("Enter the space agency name: ");
+			Agency = menuAns.nextLine();
+			if(!Agency.isEmpty()) break;
+		}
+
+		while(true){
+			System.out.print("Enter the MID: ");
+			MID = menuAns.nextLine();
+			if(!MID.isEmpty()) break;
+		}
+        
+        while(true){
+			System.out.print("Enter the SNum: ");
+			SNum = menuAns.nextLine();
+			if(!SNum.isEmpty()) break;
+		}
+
+		PreparedStatement stmt = mySQLDB.prepareStatement(selectSQL);
+		stmt.setString(1, Agency);
+        stmt.setString(2, MID);
+        stmt.setString(3, SNum);
+		
+		ResultSet resultSet = stmt.executeQuery();
+        resultSet.next();
+        /*System.out.print("| " + resultSet.getInt(1) + " |");
+        System.out.println();
+        System.out.println("End of Query");*/
+        if(resultSet.getInt(1)!=1){
+            System.err.println("[Error]: This spacecraft is not available to be returned");
+            resultSet.close();
+            stmt.close();
+            return;
+        }
+		
+        resultSet.close();
+        
+		stmt.close();
+        
+        System.out.println(DateObject);
+
+		PreparedStatement stmt2 = mySQLDB.prepareStatement(updateSQL);
+		stmt2.setDate(1, DateObject);
+		stmt2.setString(2, Agency);
+        stmt2.setString(3, MID);
+        stmt2.setString(4, SNum);
+		stmt2.executeUpdate();
+		stmt2.close();
+        
+        System.out.println("Spacecraft returned successfully!");
+
 	}
 
 	public static void customersMenu(Scanner menuAns, Connection mySQLDB) throws SQLException{
@@ -784,7 +834,7 @@ public class CSCI3170Proj {
 		if(answer.equals("1")){
 			rentSpacecraft(menuAns, mySQLDB);
 		}else if(answer.equals("2")){
-			showTotalSales(menuAns, mySQLDB);
+			returnSpacecraft(menuAns, mySQLDB);
 		}else if(answer.equals("3")){
 			showPopularPart(menuAns, mySQLDB);
 		}else if(answer.equals("4")){
