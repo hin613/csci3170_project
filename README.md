@@ -1,4 +1,7 @@
 # csci3170
+CSCI3170: Introduction to Database Systems
+Spring 2018 Project
+
 Step for running the code
 ****
 
