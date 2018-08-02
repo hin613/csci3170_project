@@ -1,4 +1,4 @@
-# csci3170
+# csci3170 project
 CSCI3170: Introduction to Database Systems
 Spring 2018 Project
 
